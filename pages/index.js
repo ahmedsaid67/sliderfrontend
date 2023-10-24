@@ -1,88 +1,79 @@
-import { useState, useEffect } from 'react';
-import axios from 'axios';
-import Image from 'next/image';
 
-const Home = () => {
-  const [data, setData] = useState([]);
-  const [currentSlide, setCurrentSlide] = useState(0);
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+function Menu() {
+  const [menuItems, setMenuItems] = useState([]);
+  const [hoveredItemId, setHoveredItemId] = useState(null);
+
+  async function getMenu() {
+    try {
+      const response = await axios.get("http://127.0.0.1:8000/api/appname/menuitems/menu/selected/");
+      setMenuItems(response.data);
+      console.log(response.data);
+    } catch (error) {
+      console.error("Hata oluştu:", error);
+    }
+  }
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const response = await axios.get('http://127.0.0.1:8000/api/appname/sliders/');
-        const responseData = response.data;
-        setData(responseData);
-      } catch (error) {
-        console.error('API isteği sırasında hata oluştu:', error);
-      }
-    }
-
-    fetchData();
+    getMenu();
   }, []);
 
-  const imageUrls = data.map(item => item.img);
+  function renderSubMenu(menuItems, parentID) {
+    const subMenuItems = menuItems.filter(item => item.parent === parentID);
 
-  const nextSlide = () => {
-    setCurrentSlide((prevSlide) => (prevSlide + 1) % imageUrls.length);
+    if (subMenuItems.length === 0) {
+      return null;
+    }
+
+    return (
+      <div>
+        {subMenuItems.map(item => (
+          <div key={item.id}>
+            <a href={item.url} style={{ color: 'blue', textDecoration: 'underline' }}>{item.title}</a>
+            <div style={{ display: 'none', color: 'red', marginLeft: '5px' }}>x</div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  const handleItemMouseEnter = (itemId) => {
+    setHoveredItemId(itemId);
   };
 
-  const prevSlide = () => {
-    setCurrentSlide((prevSlide) => (prevSlide - 1 + imageUrls.length) % imageUrls.length);
+  const handleItemMouseLeave = () => {
+    setHoveredItemId(null);
+  };
+
+  const menuStyle = {
+    backgroundColor: 'lightgray',
+    padding: '10px',
+    border: '1px solid #ccc',
+    display: "flex",
+    justifyContent: "center",
   };
 
   return (
-    <div className="slider-container">
-      <div className="slider">
-        <Image
-          src={imageUrls[currentSlide]}
-          alt={`Slide ${currentSlide}`}
-          width={800}
-          height={400}
-        />
-      </div>
-      <div className="slider-controls">
-        <button className="slider-button prev" onClick={prevSlide}>
-          Previous
-        </button>
-        <button className="slider-button next" onClick={nextSlide}>
-          Next
-        </button>
-      </div>
-
-      <style jsx>{`
-        .slider-container {
-          position: relative;
-          max-width: 800px;
-          margin: 0 auto;
-          overflow: hidden;
-        }
-
-        .slider {
-          position: relative;
-          margin-top:20px;
-        }
-
-        .slider-button {
-          background: rgba(0, 0, 0, 0.5);
-          color: white;
-          border: none;
-          cursor: pointer;
-          font-size: 18px;
-          padding: 5px 10px;
-          margin: 0 10px;
-        }
-
-        .slider-controls {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          margin-top: 10px;
-        }
-      `}</style>
+    <div style={menuStyle}>
+      {menuItems
+        .filter(item => !item.parent)
+        .map(item => (
+          <div
+            key={item.id}
+            onMouseEnter={() => handleItemMouseEnter(item.id)}
+            onMouseLeave={handleItemMouseLeave}
+          >
+            <a href={item.url} style={{ color: 'green', margin: "5px" }}>{item.title}</a>
+            {hoveredItemId === item.id && renderSubMenu(menuItems, item.id)}
+          </div>
+        ))}
     </div>
   );
-};
+}
 
-export default Home;
+export default Menu;
 
 
