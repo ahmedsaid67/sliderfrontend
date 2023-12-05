@@ -1,24 +1,44 @@
-
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-function Menu() {
+function Index() {
   const [menuItems, setMenuItems] = useState([]);
   const [hoveredItemId, setHoveredItemId] = useState(null);
 
-  async function getMenu() {
+  async function getIndex() {
     try {
       const response = await axios.get("http://127.0.0.1:8000/api/appname/menuitems/menu/selected/");
       setMenuItems(response.data);
       console.log(response.data);
+      const username="ahmet67"
+      const password="galatasaray3467"
+
+      const key = await axios({
+        method: "post",
+        url: "http://127.0.0.1:8000/api/appname/token/login/", 
+        data: {
+          username,
+          password,
+        },
+      });
+
+      console.log("key:",key.data.token)
+
+      axios.defaults.headers.common[
+        "Authorization"
+      ] = `token ${key.data.token}`;
+
+      axios.defaults.baseURL ="http://127.0.0.1:8000/api"
+      const res = await axios.get("appname/auth/users/me/");
+      console.log("user:",res)
+
     } catch (error) {
       console.error("Hata oluştu:", error);
     }
   }
 
   useEffect(() => {
-    getMenu();
+    getIndex();
   }, []);
 
   function renderSubMenu(menuItems, parentID) {
@@ -54,26 +74,19 @@ function Menu() {
     border: '1px solid #ccc',
     display: "flex",
     justifyContent: "center",
+    flexWrap: "wrap" // Flex wrap özelliği eklendi
+    
   };
 
   return (
-    <div style={menuStyle}>
-      {menuItems
-        .filter(item => !item.parent)
-        .map(item => (
-          <div
-            key={item.id}
-            onMouseEnter={() => handleItemMouseEnter(item.id)}
-            onMouseLeave={handleItemMouseLeave}
-          >
-            <a href={item.url} style={{ color: 'green', margin: "5px" }}>{item.title}</a>
-            {hoveredItemId === item.id && renderSubMenu(menuItems, item.id)}
-          </div>
-        ))}
-    </div>
+    <>
+
+      
+ 
+    </>
   );
 }
 
-export default Menu;
+export default Index;
 
 
